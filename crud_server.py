@@ -44,9 +44,24 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
             status_code=200, message=f"{{{request.key}: {CLOUD_DB.get(request.key)}}}"
         )
 
+    def Update(self, request, context):
+        if request.key not in CLOUD_DB.keys():
+            return crud_service_pb2.Response(status_code=404, message="Key not found!")
+        CLOUD_DB[request.key] = request.value
+        self.__update_sync(request.key, request.value)
+        self.__show()
+        return crud_service_pb2.Response(
+            status_code=200,
+            message=f"The key-value pair {{{request.key}: {request.value}}} has been updated successfully!",
+        )
+
     def __add_sync(self, key, value):
         for stub in self.__neibor_stubs:
             stub.Create(crud_service_pb2.Record(key=key, value=value))
+
+    def __update_sync(self, key, value):
+        for stub in self.__neibor_stubs:
+            stub.Update(crud_service_pb2.Record(key=key, value=value))
 
     def __show(self):
         datas = [(k, v) for k, v in CLOUD_DB.items()]
