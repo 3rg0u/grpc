@@ -55,6 +55,16 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
             message=f"The key-value pair {{{request.key}: {request.value}}} has been updated successfully!",
         )
 
+    def Delete(self, request, context):
+        if request.key not in CLOUD_DB.keys():
+            return crud_service_pb2.Response(status_code=404, message="Key not found!")
+        CLOUD_DB.pop(request.key)
+        self.__delete_sync(request.key)
+        self.__show()
+        return crud_service_pb2.Response(
+            status_code=200, message=f"Key {request.key} has been removed successfully!"
+        )
+
     def __add_sync(self, key, value):
         for stub in self.__neibor_stubs:
             stub.Create(crud_service_pb2.Record(key=key, value=value))
@@ -62,6 +72,10 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
     def __update_sync(self, key, value):
         for stub in self.__neibor_stubs:
             stub.Update(crud_service_pb2.Record(key=key, value=value))
+
+    def __delete_sync(self, key):
+        for stub in self.__neibor_stubs:
+            stub.Delete(crud_service_pb2.Key(key=key))
 
     def __show(self):
         datas = [(k, v) for k, v in CLOUD_DB.items()]
