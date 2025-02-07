@@ -47,9 +47,10 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
     def Update(self, request, context):
         if request.key not in CLOUD_DB.keys():
             return crud_service_pb2.Response(status_code=404, message="Key not found!")
-        CLOUD_DB[request.key] = request.value
-        self.__update_sync(request.key, request.value)
-        self.__show()
+        if CLOUD_DB[request.key] != request.value:
+            CLOUD_DB[request.key] = request.value
+            self.__update_sync(request.key, request.value)
+            self.__show()
         return crud_service_pb2.Response(
             status_code=200,
             message=f"The key-value pair {{{request.key}: {request.value}}} has been updated successfully!",

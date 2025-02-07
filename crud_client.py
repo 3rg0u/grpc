@@ -13,20 +13,31 @@ class Service:
         )
 
     def menu(self):
-        print(
-            """
-              1. Add new key-value pair\n
-              2. Read a key\n
-              """
-        )
-        choice = int(input("Your choice: "))
-        match choice:
-            case 1:
-                print(self.__add())
-            case 2:
-                print(self.__read())
-            case _:
-                print("Invalid choice")
+        while True:
+            print(
+                """
+                1. Add a new record\n
+                2. Read a key\n
+                3. Update an existing record\n
+                4. Delete a record
+                """
+            )
+            try:
+                choice = int(input("Your choice: "))
+            except ValueError:
+                print("Invalid choice!")
+                continue
+            match choice:
+                case 1:
+                    print(self.__add())
+                case 2:
+                    print(self.__read())
+                case 3:
+                    print(self.__update())
+                case 4:
+                    print(self.__delete())
+                case _:
+                    print("Invalid choice")
 
     def __add(self):
         key = input("Enter key: ")
@@ -37,23 +48,18 @@ class Service:
         key = input("Enter key: ")
         return self.__stub.Read(crud_service_pb2.Key(key=key))
 
+    def __update(self):
+        key = input("Enter key: ")
+        value = input("Enter value: ")
+        return self.__stub.Update(crud_service_pb2.Record(key=key, value=value))
 
-# def run():
-#     port = int(input("Server's port: "))
-#     with grpc.insecure_channel(f"localhost:{port}") as channel:
-#         stub = crud_service_pb2_grpc.CloudStorageStub(channel=channel)
-#         while True:
-#             key = input("Enter key: ")
-#             value = input("Enter value: ")
-#             record = crud_service_pb2.Record(key=key, value=value)
-#             response = stub.Create(record)
-#             print(response)
-#             if input("Continue? ") != "y":
-#                 break
+    def __delete(self):
+        key = input("Enter key: ")
+        return self.__stub.Delete(crud_service_pb2.Key(key=key))
+
 
 if __name__ == "__main__":
     logging.basicConfig()
     port = input("Port: ")
     service = Service(f"localhost:{port}")
-    while True:
-        service.menu()
+    service.menu()
