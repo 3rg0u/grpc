@@ -2,6 +2,7 @@ import logging
 
 
 import grpc
+import grpc._channel
 import crud_service_pb2
 import crud_service_pb2_grpc
 
@@ -61,5 +62,8 @@ class Service:
 if __name__ == "__main__":
     logging.basicConfig()
     port = input("Port: ")
-    service = Service(f"localhost:{port}")
-    service.menu()
+    try:
+        service = Service(f"localhost:{port}")
+        service.menu()
+    except grpc._channel._InactiveRpcError:
+        print("Connect error!")
