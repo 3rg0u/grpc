@@ -1,27 +1,25 @@
 syntax = "proto3";
 
-
-message Record{
+message Record {
     string key = 1;
     string value = 2;
 }
 
-message Key{
+message Key {
     string key = 1;
 }
 
-message Response{
+message Response {
     int32 status_code = 1;
     string message = 2;
 }
 
+message Empty {} // Message rỗng dùng cho Heartbeat
 
-
-
-service CloudStorage{
-    rpc Create(Record) returns (Response){}
-    rpc Read(Key) returns (Response){}
-    rpc Update(Record) returns (Response){}
-    rpc Delete(Key) returns (Response){}
+service CloudStorage {
+    rpc Create(Record) returns (Response) {}
+    rpc Read(Key) returns (Response) {}
+    rpc Update(Record) returns (Response) {}
+    rpc Delete(Key) returns (Response) {}
+    rpc Heartbeat(Empty) returns (Response) {} // Thêm phương thức Heartbeat
 }
-
