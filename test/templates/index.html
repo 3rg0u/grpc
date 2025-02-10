@@ -1,0 +1,13 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container d-flex flex-column m-auto w-100 h-100 gap-5">
+  <div>
+    <h1 class="alert alert-success">This is fucking stupid</h1>
+  </div>
+  <div class="container d-flex flex-row m-auto justify-content-evenly gap-5">
+    {% include "create.html" %} {% include "read.html" %} {% include
+    "update.html" %} {% include "delete.html" %}
+  </div>
+</div>
+
+{% endblock %}

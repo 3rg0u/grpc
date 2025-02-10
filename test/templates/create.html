@@ -1,0 +1,62 @@
+<div class="d-flex align-items-center justify-content-end gap-3">
+  <div
+    class="modal fade"
+    id="createRecordModal"
+    aria-hidden="true"
+    aria-labelledby="exampleModalToggleLabel"
+    tabindex="-1"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create a new record</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <form action="/read" method="GET">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="key" class="form-label">Key</label>
+              <input type="text" class="form-control" name="key" required />
+            </div>
+            <div class="mb-3">
+              <label for="value" class="form-label">Value</label>
+              <input type="text" class="form-control" name="value" required />
+            </div>
+          </div>
+          <div class="modal-footer d-flex align-items-center gap-3">
+            <button
+              type="submit"
+              class="btn btn-md btn-success d-flex align-items-center gap-1"
+            >
+              <ion-icon name="create-outline"></ion-icon>
+              <p class="white-text m-0">Create</p>
+            </button>
+            <button
+              type="button"
+              class="btn btn-md btn-danger d-flex align-items-center gap-1"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <ion-icon name="close-circle-outline"></ion-icon>
+              <p class="white-text m-0">Cancel</p>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <a
+    class="btn btn-success btn-lg d-flex align-items-center gap-1"
+    data-bs-toggle="modal"
+    href="#createRecordModal"
+    role="button"
+  >
+    <ion-icon name="create-outline"></ion-icon>
+    <p class="white-text m-0">Create</p>
+  </a>
+</div>
