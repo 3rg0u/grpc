@@ -14,12 +14,18 @@ message Response {
     string message = 2;
 }
 
-message Empty {} // Message rỗng dùng cho Heartbeat
+message Empty {}  // Message rỗng dùng cho các RPC không cần dữ liệu vào
+
+// Message trả về cho RPC Snapshot
+message SnapshotResponse {
+    repeated Record records = 1;
+}
 
 service CloudStorage {
     rpc Create(Record) returns (Response) {}
     rpc Read(Key) returns (Response) {}
     rpc Update(Record) returns (Response) {}
     rpc Delete(Key) returns (Response) {}
-    rpc Heartbeat(Empty) returns (Response) {} // Thêm phương thức Heartbeat
+    rpc Heartbeat(Empty) returns (Response) {}
+    rpc Snapshot(Empty) returns (SnapshotResponse) {}  // RPC Snapshot để lấy dữ liệu đầy đủ
 }
