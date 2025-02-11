@@ -2,18 +2,14 @@ import grpc
 import crud_service_pb2
 import crud_service_pb2_grpc
 
+
 class Service:
     def __init__(self):
-        """
-        Sử dụng danh sách các node cố định: 6677, 7766, 6767.
-        Nếu địa chỉ chỉ là số cổng, tự thêm "localhost:" vào.
-        """
-        # Danh sách địa chỉ cố định
         addresses = ["6677", "7766", "6767"]
-        
+
         self.__stubs = []
         for address in addresses:
-            if ':' not in address:
+            if ":" not in address:
                 address = "localhost:" + address
             channel = grpc.insecure_channel(address)
             stub = crud_service_pb2_grpc.CloudStorageStub(channel)
@@ -24,16 +20,11 @@ class Service:
             print(" -", address)
 
     def __call_rpc(self, rpc_method, request):
-        """
-        Duyệt qua danh sách các node cố định để gọi RPC.
-        Nếu một node không phản hồi (bị tắt) sẽ bỏ qua và chuyển sang node khác.
-        """
         for address, stub in self.__stubs:
             try:
-                # Thêm timeout để không bị treo nếu node không phản hồi
                 return getattr(stub, rpc_method)(request, timeout=5)
             except grpc.RpcError as e:
-                print(f"Node {address} failed: {e}")
+                print(f"Node {address} failed!")
         print("All nodes are unreachable!")
         return None
 
@@ -90,8 +81,10 @@ class Service:
             else:
                 print("Invalid choice")
 
+
 if __name__ == "__main__":
     import logging
+
     logging.basicConfig()
     service = Service()
     service.menu()
