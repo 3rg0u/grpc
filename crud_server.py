@@ -4,25 +4,32 @@ import crud_service_pb2_grpc
 
 from concurrent import futures
 import logging
+import threading
+import time
 
 from nodes import NODES
 from tabulate import tabulate
 
 CLOUD_DB = {}
 
-
 server_port = input("Choose a port to serve: ")
 
 
 class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
     def __init__(self):
-        self.__neibor_stubs = [
-            crud_service_pb2_grpc.CloudStorageStub(
-                channel=grpc.insecure_channel(f"localhost:{port}")
-            )
-            for port in NODES
-            if port != server_port
-        ]
+        self.__neighbors = {}
+        for port in NODES:
+            if port != server_port:
+                self.__neighbors[port] = {
+                    "stub": crud_service_pb2_grpc.CloudStorageStub(
+                        channel=grpc.insecure_channel(f"localhost:{port}")
+                    ),
+                    "alive": True,
+                }
+        heartbeat_thread = threading.Thread(target=self.__heartbeat_loop, daemon=True)
+        heartbeat_thread.start()
+
+        threading.Thread(target=self.__recover_data, daemon=True).start()
 
     def Create(self, request, context):
         if request.key in CLOUD_DB.keys():
@@ -66,25 +73,87 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
             status_code=200, message=f"Key {request.key} has been removed successfully!"
         )
 
+    def Heartbeat(self, request, context):
+        return crud_service_pb2.Response(status_code=200, message="Alive")
+
+    def Snapshot(self, request, context):
+        records = []
+        for key, value in CLOUD_DB.items():
+            records.append(crud_service_pb2.Record(key=key, value=value))
+        return crud_service_pb2.SnapshotResponse(records=records)
+
     def __add_sync(self, key, value):
-        for stub in self.__neibor_stubs:
-            stub.Create(crud_service_pb2.Record(key=key, value=value))
+        for port, neighbor in self.__neighbors.items():
+            if neighbor["alive"]:
+                try:
+                    neighbor["stub"].Create(
+                        crud_service_pb2.Record(key=key, value=value)
+                    )
+                except grpc.RpcError as e:
+                    print(f"[SYNC-ERROR] Node at {port} is down during Create sync!")
+                    neighbor["alive"] = False
 
     def __update_sync(self, key, value):
-        for stub in self.__neibor_stubs:
-            stub.Update(crud_service_pb2.Record(key=key, value=value))
+        for port, neighbor in self.__neighbors.items():
+            if neighbor["alive"]:
+                try:
+                    neighbor["stub"].Update(
+                        crud_service_pb2.Record(key=key, value=value)
+                    )
+                except grpc.RpcError as e:
+                    print(f"[SYNC-ERROR] Node at {port} is down during Update sync!")
+                    neighbor["alive"] = False
 
     def __delete_sync(self, key):
-        for stub in self.__neibor_stubs:
-            stub.Delete(crud_service_pb2.Key(key=key))
+        for port, neighbor in self.__neighbors.items():
+            if neighbor["alive"]:
+                try:
+                    neighbor["stub"].Delete(crud_service_pb2.Key(key=key))
+                except grpc.RpcError as e:
+                    print(f"[SYNC-ERROR] Node at {port} is down during Delete sync!")
+                    neighbor["alive"] = False
 
     def __show(self):
         datas = [(k, v) for k, v in CLOUD_DB.items()]
         print(tabulate(datas, headers=["key", "value"], tablefmt="grid"))
 
+    def __heartbeat_loop(self):
+        while True:
+            for port, neighbor in self.__neighbors.items():
+                try:
+                    response = neighbor["stub"].Heartbeat(
+                        crud_service_pb2.Empty(), timeout=2
+                    )
+                    if response.status_code == 200:
+                        if not neighbor["alive"]:
+                            print(f"[HEARTBEAT] Node at {port} has recovered!")
+                        neighbor["alive"] = True
+                except grpc.RpcError as e:
+                    if neighbor["alive"]:
+                        print(f"[HEARTBEAT] Node at {port} is down!")
+                    neighbor["alive"] = False
+            time.sleep(5)
+
+    def __recover_data(self):
+        while not CLOUD_DB:
+            for port, neighbor in self.__neighbors.items():
+                if neighbor["alive"]:
+                    try:
+                        snapshot = neighbor["stub"].Snapshot(
+                            crud_service_pb2.Empty(), timeout=5
+                        )
+                        if snapshot.records:
+                            for record in snapshot.records:
+                                CLOUD_DB[record.key] = record.value
+                            print(f"[RECOVERY] Data recovered from node {port}")
+                            self.__show()
+                            return
+                    except grpc.RpcError as e:
+                        print(f"[RECOVERY] Failed to get snapshot from node {port}!")
+            time.sleep(5)
+
 
 def serve():
-
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     crud_service_pb2_grpc.add_CloudStorageServicer_to_server(
         CloudStorage(), server=server

@@ -1,7 +1,7 @@
 <div class="d-flex align-items-center justify-content-end gap-3">
   <div
     class="modal fade"
-    id="Delete"
+    id="readRecordModal"
     aria-hidden="true"
     aria-labelledby="exampleModalToggleLabel"
     tabindex="-1"
@@ -9,7 +9,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Delete an existing record</h5>
+          <h5 class="modal-title">Read an existing record</h5>
           <button
             type="button"
             class="btn-close"
@@ -21,15 +21,21 @@
           <div class="modal-body">
             <div class="mb-3">
               <label for="key" class="form-label">Key</label>
-              <input type="text" class="form-control" name="key" required />
+              <input
+                type="text"
+                class="form-control"
+                name="key"
+                required
+                autofocus
+              />
             </div>
           </div>
           <div class="modal-footer d-flex align-items-center gap-3">
             <button
               type="submit"
-              class="btn btn-md btn-success d-flex align-items-center gap-1"
+              class="btn btn-md btn-warning d-flex align-items-center gap-1"
             >
-              <ion-icon name="create-outline"></ion-icon>
+              <ion-icon name="book-outline"></ion-icon>
               <p class="white-text m-0">Read</p>
             </button>
             <button
@@ -47,12 +53,12 @@
     </div>
   </div>
   <a
-    class="btn btn-danger btn-lg d-flex align-items-center gap-1"
+    class="btn btn-warning btn-lg d-flex align-items-center gap-1"
     data-bs-toggle="modal"
-    href="#Delete"
+    href="#readRecordModal"
     role="button"
   >
-    <ion-icon name="create-outline"></ion-icon>
-    <p class="white-text m-0">Delete</p>
+    <ion-icon name="book-outline"></ion-icon>
+    <p class="white-text m-0">Read</p>
   </a>
 </div>

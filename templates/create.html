@@ -17,11 +17,17 @@
             aria-label="Close"
           ></button>
         </div>
-        <form action="/read" method="GET">
+        <form action="/create" method="POST">
           <div class="modal-body">
             <div class="mb-3">
               <label for="key" class="form-label">Key</label>
-              <input type="text" class="form-control" name="key" required />
+              <input
+                type="text"
+                class="form-control"
+                name="key"
+                required
+                autofocus
+              />
             </div>
             <div class="mb-3">
               <label for="value" class="form-label">Value</label>
@@ -33,7 +39,7 @@
               type="submit"
               class="btn btn-md btn-success d-flex align-items-center gap-1"
             >
-              <ion-icon name="create-outline"></ion-icon>
+              <ion-icon name="add-circle-outline"></ion-icon>
               <p class="white-text m-0">Create</p>
             </button>
             <button
@@ -56,7 +62,7 @@
     href="#createRecordModal"
     role="button"
   >
-    <ion-icon name="create-outline"></ion-icon>
+    <ion-icon name="add-circle-outline"></ion-icon>
     <p class="white-text m-0">Create</p>
   </a>
 </div>

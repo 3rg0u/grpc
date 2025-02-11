@@ -1,69 +1,72 @@
 import logging
 
-
 import grpc
 import grpc._channel
-import crud_service_pb2
-import crud_service_pb2_grpc
+
+from flask import Flask, render_template, request, flash, redirect
+
+from __service import Service
+from __gen_key import gen_key
+
+try:
+    SERVICE = Service()
+except grpc._channel._InactiveRpcError:
+    print("Connection error!")
+
+app = Flask(__name__)
+app.secret_key = gen_key()
 
 
-class Service:
-    def __init__(self, channel):
-        self.__stub = crud_service_pb2_grpc.CloudStorageStub(
-            channel=grpc.insecure_channel(channel)
-        )
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-    def menu(self):
-        while True:
-            print(
-                """
-                1. Add a new record\n
-                2. Read a key\n
-                3. Update an existing record\n
-                4. Delete a record
-                """
-            )
-            try:
-                choice = int(input("Your choice: "))
-            except ValueError:
-                print("Invalid choice!")
-                continue
-            match choice:
-                case 1:
-                    print(self.__add())
-                case 2:
-                    print(self.__read())
-                case 3:
-                    print(self.__update())
-                case 4:
-                    print(self.__delete())
-                case _:
-                    print("Invalid choice")
 
-    def __add(self):
-        key = input("Enter key: ")
-        value = input("Enter value: ")
-        return self.__stub.Create(crud_service_pb2.Record(key=key, value=value))
+@app.route("/create", methods=["POST"])
+def create():
+    response = SERVICE.create(
+        key=request.form.get("key"), value=request.form.get("value")
+    )
+    if response.status_code == 200:
+        flash(message="created successfully", category="success")
+    else:
+        flash(message="key is already existed", category="error")
 
-    def __read(self):
-        key = input("Enter key: ")
-        return self.__stub.Read(crud_service_pb2.Key(key=key))
+    return redirect("/")
 
-    def __update(self):
-        key = input("Enter key: ")
-        value = input("Enter value: ")
-        return self.__stub.Update(crud_service_pb2.Record(key=key, value=value))
 
-    def __delete(self):
-        key = input("Enter key: ")
-        return self.__stub.Delete(crud_service_pb2.Key(key=key))
+@app.route("/read", methods=["GET"])
+def read():
+    response = SERVICE.read(key=request.args.get("key"))
+    if response.status_code == 404:
+        flash(message="key does not exist!", category="error")
+        return redirect("/")
+    return response.message
+
+
+@app.route("/update", methods=["POST", "PUT"])
+def update():
+    response = SERVICE.update(
+        key=request.form.get("key"), value=request.form.get("value")
+    )
+    if response.status_code == 404:
+        flash(message="key does not exist!", category="error")
+    else:
+        flash(message="updated successfully!", category="success")
+    return redirect("/")
+
+
+@app.route("/delete", methods=["POST", "DELETE"])
+def delete():
+    response = SERVICE.delete(key=request.form.get("key"))
+    if response.status_code == 404:
+        flash(message="key does not exist!", category="error")
+    else:
+        flash(message="deleted successfully!", category="success")
+    return redirect("/")
 
 
 if __name__ == "__main__":
+
     logging.basicConfig()
-    port = input("Port: ")
-    try:
-        service = Service(f"localhost:{port}")
-        service.menu()
-    except grpc._channel._InactiveRpcError:
-        print("Connect error!")
+    app.run(debug=True)
