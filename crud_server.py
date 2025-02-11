@@ -1,14 +1,13 @@
-import grpc
-import crud_service_pb2
-import crud_service_pb2_grpc
+# import sys, os
 
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import grpc, logging, threading, time
+from crud_services import crud_service_pb2, crud_service_pb2_grpc
 from concurrent import futures
-import logging
-import threading
-import time
-
 from nodes import NODES
 from tabulate import tabulate
+
 
 CLOUD_DB = {}
 

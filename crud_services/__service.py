@@ -1,8 +1,8 @@
-import logging
 import grpc
 import grpc._channel
-import crud_service_pb2
-import crud_service_pb2_grpc
+
+
+from crud_services import crud_service_pb2, crud_service_pb2_grpc
 
 
 class Service:
