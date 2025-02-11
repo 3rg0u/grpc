@@ -2,18 +2,16 @@ import grpc
 import grpc._channel
 
 
-from crud_services import crud_service_pb2, crud_service_pb2_grpc
+from crud_services import crud_service_pb2, crud_service_pb2_grpc, nodes
 
 
 class Service:
     def __init__(self):
-        addresses = ["6677", "7766", "6767"]
+        addresses = nodes.NODES
 
         self.__stubs = []
         for address in addresses:
-            if ":" not in address:
-                address = "localhost:" + address
-            channel = grpc.insecure_channel(address)
+            channel = grpc.insecure_channel(f"localhost:{address}")
             stub = crud_service_pb2_grpc.CloudStorageStub(channel)
             self.__stubs.append((address, stub))
 

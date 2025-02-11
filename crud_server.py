@@ -1,11 +1,7 @@
-# import sys, os
-
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 import grpc, logging, threading, time
 from crud_services import crud_service_pb2, crud_service_pb2_grpc
 from concurrent import futures
-from nodes import NODES
+from crud_services.nodes import NODES
 from tabulate import tabulate
 
 

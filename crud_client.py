@@ -5,7 +5,7 @@ import grpc._channel
 
 from flask import Flask, render_template, request, flash, redirect
 
-from __gen_key import gen_key
+from crud_services.__gen_key import gen_key
 from crud_services.__service import Service
 
 try:
