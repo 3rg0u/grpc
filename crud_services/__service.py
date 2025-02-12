@@ -10,18 +10,17 @@ class Service:
         addresses = nodes.NODES
 
         self.__stubs = []
+
+        # establish all servers
         for address in addresses:
             channel = grpc.insecure_channel(f"localhost:{address}")
             stub = crud_service_pb2_grpc.CloudStorageStub(channel)
             self.__stubs.append((address, stub))
 
-        print("Using nodes:")
-        for address, _ in self.__stubs:
-            print(" -", address)
-
     def __call_rpc(self, rpc_method, request):
         for address, stub in self.__stubs:
             try:
+                # check alive to send request
                 return getattr(stub, rpc_method)(request, timeout=5)
             except grpc.RpcError as e:
                 print(f"Node {address} failed!")
