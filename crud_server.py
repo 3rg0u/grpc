@@ -141,11 +141,15 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
     def __recover_data(self):
         while not CLOUD_DB:
             for port, neighbor in self.__neighbors.items():
+
+                # if neibor alive, ask to recover data
                 if neighbor["alive"]:
                     try:
                         snapshot = neighbor["stub"].Snapshot(
                             crud_service_pb2.Empty(), timeout=5
                         )
+
+                        # store datas recovered
                         if snapshot.records:
                             for record in snapshot.records:
                                 CLOUD_DB[record.key] = record.value
