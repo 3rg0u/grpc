@@ -13,6 +13,8 @@ server_port = input("Choose a port to serve: ")
 class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
     def __init__(self):
         self.__neighbors = {}
+
+        # init neibor nodes with insecure channel
         for port in NODES:
             if port != server_port:
                 self.__neighbors[port] = {
@@ -21,18 +23,19 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
                     ),
                     "alive": True,
                 }
-        heartbeat_thread = threading.Thread(target=self.__heartbeat_loop, daemon=True)
-        heartbeat_thread.start()
 
+        # alive check & recovery data using multithread
+        threading.Thread(target=self.__heartbeat_loop, daemon=True).start()
         threading.Thread(target=self.__recover_data, daemon=True).start()
 
     def Create(self, request, context):
+        # check if key is already existed
         if request.key in CLOUD_DB.keys():
             return crud_service_pb2.Response(
                 status_code=409, message=f"The key {request.key} is already exist!"
             )
         CLOUD_DB[request.key] = request.value
-        self.__add_sync(request.key, request.value)
+        self.__add_sync(request.key, request.value)  # sync to neibors
         self.__show()
         return crud_service_pb2.Response(
             status_code=200,
@@ -40,18 +43,22 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
         )
 
     def Read(self, request, context):
+
+        # check if key eixsit in database
         if request.key not in CLOUD_DB.keys():
             return crud_service_pb2.Response(status_code=404, message="Key not found!")
+
         return crud_service_pb2.Response(
             status_code=200, message=f"{{{request.key}: {CLOUD_DB.get(request.key)}}}"
         )
 
     def Update(self, request, context):
+        # check if key exist in database
         if request.key not in CLOUD_DB.keys():
             return crud_service_pb2.Response(status_code=404, message="Key not found!")
         if CLOUD_DB[request.key] != request.value:
             CLOUD_DB[request.key] = request.value
-            self.__update_sync(request.key, request.value)
+            self.__update_sync(request.key, request.value)  # sync to neibors
             self.__show()
         return crud_service_pb2.Response(
             status_code=200,
@@ -59,10 +66,11 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
         )
 
     def Delete(self, request, context):
+        # check if key exist
         if request.key not in CLOUD_DB.keys():
             return crud_service_pb2.Response(status_code=404, message="Key not found!")
         CLOUD_DB.pop(request.key)
-        self.__delete_sync(request.key)
+        self.__delete_sync(request.key)  # sync to neibors
         self.__show()
         return crud_service_pb2.Response(
             status_code=200, message=f"Key {request.key} has been removed successfully!"
@@ -79,6 +87,7 @@ class CloudStorage(crud_service_pb2_grpc.CloudStorageServicer):
 
     def __add_sync(self, key, value):
         for port, neighbor in self.__neighbors.items():
+            # only sync if neibor is alive
             if neighbor["alive"]:
                 try:
                     neighbor["stub"].Create(
